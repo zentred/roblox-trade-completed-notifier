@@ -81,7 +81,7 @@ def check(all):
                 'fields': [
                     {'name': f'📤 Gave [{me}]','value': f'{me_hook}','inline':True},
                     {'name': f'\u200b','value': f'\u200b','inline':True},
-                    {'name': f'📥 Received Items: [{them}]','value': f'{them_hook}','inline':True},
+                    {'name': f'📥 Received: [{them}]','value': f'{them_hook}','inline':True},
                     {'name': '💸 Profit','value': f'{profit} ({percentage}%)','inline':False},
                     ]
                 }]
