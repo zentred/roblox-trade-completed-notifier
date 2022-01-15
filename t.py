@@ -89,7 +89,7 @@ def check(all):
             'content': f'<@{discordid}>',
             'embeds':[{
                 'author': {
-                    'name': f'Trade from {their_username}\n\u200b',
+                    'name': f'Trade accepted by {their_username}\n\u200b',
                     'url': f'https://www.roblox.com/users/{str(their_id)}/profile'
                     },
                 'color': int('00FF00',16),
