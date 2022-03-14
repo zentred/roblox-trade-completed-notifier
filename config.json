@@ -1,9 +1,9 @@
 {
-  "discordId": "discord id here",
+  "discordId": "ur discord id",
   "cookies": [
     {
       "cookie": "cookie here",
       "webhook": "webhook here"
     }
-   ]
+  ]
 }
