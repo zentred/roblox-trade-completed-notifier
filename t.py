@@ -8,11 +8,7 @@ lock = threading.Lock()
 with open('config.json','r') as config:
     config = json.load(config)
 
-bigProfitWebhook = config['bigProfitWebhook']
-smallProfitWebhook = config['smallProfitWebhook']
-lossWebhook = config['lossProfitWebhook']
 discordid = config['discordId']
-cookies = config['cookies']
 
 def rolimons():
     global totalValues
@@ -38,11 +34,12 @@ threading.Thread(target=rolimons).start()
 time.sleep(2)
 
 class Player:
-    def __init__(self, cookie):
-        self.cookie = cookie
+    def __init__(self, cfg):
+        self.cookie = cfg['cookie']
+        self.webhook = cfg['webhook']
         self.alreadyChecked = []
         self.req = requests.Session()
-        self.req.cookies['.ROBLOSECURITY'] = cookie
+        self.req.cookies['.ROBLOSECURITY'] = cfg['cookie']
 
     def oldCompleteds(self):
         oldAccepts = self.req.get('https://trades.roblox.com/v1/trades/completed?cursor=&limit=25&sortOrder=Desc').json()
@@ -73,16 +70,17 @@ class Player:
             try:
                 r = self.req.get(f'https://trades.roblox.com/v1/trades/{tradeId}').json()
 
-                myValue, theirValue, myOffer,theirOffer = 0, 0, [f'\u200b\n**Robux**: {r["offers"][0]["robux"]}\n'], [f'\u200b\n**Robux**: {r["offers"][1]["robux"]}\n']
+                myValue, theirValue, myOffer,theirOffer = 0, 0, [], []
+                myRobux, theirRobux = r["offers"][0]["robux"], r["offers"][1]["robux"]
 
                 for item in r['offers'][0]['userAssets']:
                     itemValue, itemName, itemProjection = totalValues[str(item['assetId'])].split('/',3)
-                    myOffer.append(f'**Item**: {itemName}\n**Value**: {"{:,}".format(int(itemValue))}\n')
+                    myOffer.append(f'(**{"{:,}".format(int(itemValue))}**) {itemName}')
                     myValue += int(itemValue)
 
                 for item in r['offers'][1]['userAssets']:
                     itemValue, itemName, itemProjection = totalValues[str(item['assetId'])].split('/',3)
-                    theirOffer.append(f'**Item**: {itemName}\n**Value**: {"{:,}".format(int(itemValue))}\n')
+                    theirOffer.append(f'(**{"{:,}".format(int(itemValue))}**) {itemName}')
                     theirValue += int(itemValue)
 
                 myOffer, theirOffer = '\n'.join(myOffer), '\n'.join(theirOffer)
@@ -101,35 +99,25 @@ class Player:
                     'content': f'<@{discordid}>',
                     'embeds':[{
                         'author': {
-                            'name': f'Trade accepted by {theirUsername}\n\u200b',
-                            'url': f'https://www.roblox.com/users/{str(theirUserId)}/profile'
+                            'name': f'New completed: {theirUsername}\n\u200b',
+                            'url': f'https://www.roblox.com/users/{theirUserId}/profile'
                             },
                         'color': int('00FF00',16),
                         'fields': [
-                            {'name': f'📤 Gave [{myValue}]','value': f'{myOffer}','inline':True},
-                            {'name': f'\u200b','value': f'\u200b','inline':True},
-                            {'name': f'📥 Received: [{theirValue}]','value': f'{theirOffer}','inline':True},
-                            {'name': '💸 Profit','value': f'{profitAmount} ({profitPercentage}%)','inline':False},
+                            {'name': f'📤 Gave: [{"{:,}".format(int(myValue))}]','value': f'{myOffer}\nRobux: {"{:,}".format(int(myRobux))}\n\u200b','inline':False},
+                            {'name': f'📥 Received: [{"{:,}".format(int(theirValue))}]','value': f'{theirOffer}\nRobux: {"{:,}".format(int(theirRobux))}\n\u200b','inline':False},
+                            {'name': 'Details:','value': f'\nProfit: {profitAmount} ({profitPercentage}%)\nAccount: ||{myUsername}||','inline':False},
                                 ],
                             'thumbnail': {
-                                'url': f'http://www.roblox.com/Thumbs/Avatar.ashx?x=200&y=200&Format=Png&username={theirUsername}',
-                            },
-                            'footer': {
-                                'text': f'Account: {myUsername}'
+                                'url': f'https://www.roblox.com/headshot-thumbnail/image?userId={theirUserId}&width=420&height=420&format=png',
                             }
                         }]
                     }
-                if int(profitAmount) < 1000 and int(profitAmount) > 0:
-                    requests.post(smallProfitWebhook, json=data)
-                    with lock: print(f'{Fore.WHITE}[{Fore.GREEN}Found{Fore.WHITE}] {Fore.GREEN}New completed trade was found for {myUsername}')
-                elif int(profitAmount) > 1000:
-                    requests.post(bigProfitWebhook, json=data)
-                    with lock: print(f'{Fore.WHITE}[{Fore.GREEN}Found{Fore.WHITE}] {Fore.GREEN}New completed trade was found for {myUsername}')
-                else:
-                    requests.post(lossWebhook, json=data)
-                    with lock: print(f'{Fore.WHITE}[{Fore.GREEN}Found{Fore.WHITE}] {Fore.GREEN}New completed trade was found for {myUsername}')
+                requests.post(self.webhook, json=data)
+                with lock: print(f'{Fore.WHITE}[{Fore.GREEN}Found{Fore.WHITE}] {Fore.GREEN}New completed trade was found for {myUsername}')
                 self.alreadyChecked.append(tradeId)
             except Exception as err:
+                print(err)
                 pass
 
     def looping(self):
@@ -139,6 +127,6 @@ class Player:
             time.sleep(300)
 
 
-for cookie in cookies:
-    c = Player(cookie)
+for cfg in config['cookies']:
+    c = Player(cfg)
     threading.Thread(target=c.looping).start()
