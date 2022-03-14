@@ -1,10 +1,9 @@
 {
-  "bigProfitWebhook": "webhook - will send trades with 1k+ profit here",
-  "smallProfitWebhook": "webhook - will send trades with under 1k profit here",
-  "lossProfitWebhook": "webhook - will send trades with losses (based on negative profit value)",
   "discordId": "discord id here",
   "cookies": [
-    "cookie 1",
-    "cookie 2 etc"
-  ]
+    {
+      "cookie": "cookie here",
+      "webhook": "webhook here"
+    }
+   ]
 }
